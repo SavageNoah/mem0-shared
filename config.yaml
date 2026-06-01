@@ -1,0 +1,72 @@
+# 第二大脑 - 系统配置
+# 修改后保存，无需重启监控脚本
+
+paths:
+  # 微信文件下载目录（会自动监控这里的新文件）
+  wechat_file_storage: "C:/Users/{username}/Documents/WeChat Files/FileStorage/File"
+  # 项目根目录 - 改为 mem0-shared 所在目录，防止路径不存在导致的问题
+  base_dir: "D:/Claude code/mem0-shared"
+  inbox: "D:/Claude code/mem0-shared/data/inbox"
+  raw: "D:/Claude code/mem0-shared/data/raw"
+  duckdb: "D:/Claude code/mem0-shared/data/duckdb/knowledge.db"
+  vectors: "D:/Claude code/mem0-shared/data/vectors"
+  journal: "D:/Claude code/mem0-shared/data/journal"
+  projects: "D:/Claude code/mem0-shared/data/projects"
+
+# 向量模型配置 - 统一使用本地 bge-base-zh-v1.5 (768d)
+embedding:
+  # 选项: openai / huggingface / none
+  # 所有 agent 必须统一使用此模型，否则向量空间不同无法共享查询
+  provider: "huggingface"
+  model: "BAAI/bge-base-zh-v1.5"
+
+# LLM 配置（用于 Agent 标签/摘要/日志）
+llm:
+  provider: "openai"
+  model: "ark-code-latest"
+  base_url: "https://ark.cn-beijing.volces.com/api/coding/v3"
+  api_key: "c58a535e-1df8-4b67-8529-eb73b8f2c7b0"
+
+# 监控配置
+monitor:
+  # 扫描间隔（秒）
+  interval: 30
+  # 是否监控微信目录
+  watch_wechat: true
+  # 自动处理 inbox 中的旧文件（启动时扫描）
+  process_existing: true
+
+# 定时任务
+cron:
+  # 每日凌晨生成知识日志（小时：分）
+  journal_time: "06:00"
+  # 每日打标签和关联
+  tag_time: "04:00"
+
+# 长期记忆 (mem0) 配置
+memory:
+  enabled: true
+  # 向量存储后端: chroma / sqlite / qdrant
+  vector_store:
+    provider: "chroma"
+    config:
+      collection_name: "second_brain_memories_v2"
+      # 使用 mem0-shared 目录下的 chroma_db
+      path: "D:/Claude code/mem0-shared/chroma_db"
+  # LLM 用于记忆提取和总结（复用上方 llm 配置）
+  llm:
+    provider: "openai"
+    model: ""               # 空则复用顶层 llm.model
+    base_url: ""            # 空则复用顶层 llm.base_url
+    api_key: ""             # 空则复用顶层 llm.api_key
+  # 记忆作用域: user 为单用户模式
+  defaults:
+    user_id: "hermes"
+    # 记忆分类标签，方便后续检索
+    categories:
+      - "preference"      # 用户偏好（投资风格、阅读领域等）
+      - "fact"            # 已知事实（持仓、子女年龄等）
+      - "habit"           # 习惯（常用标签、作息时间）
+      - "project"         # 活跃项目上下文
+      - "alert"           # 告警记录
+      - "monitor"         # 监控状态
